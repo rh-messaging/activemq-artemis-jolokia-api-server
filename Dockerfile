@@ -46,11 +46,11 @@ CMD ["node", "dist/app.js"]
 
 ## Labels
 LABEL name="amq-broker-7/amq-broker-713-jolokia-api-server-rhel8"
-LABEL description="Red Hat AMQ 7.13 Jolokia API Server"
+LABEL description="Red Hat AMQ 7.13 Jolokia Api Server"
 LABEL maintainer="Howard Gao <hgao@redhat.com>"
-LABEL version="0.1.1"
+LABEL version="7.13.0"
 LABEL summary="Red Hat AMQ 7.13 Jolokia Api Server"
-LABEL amq.broker.version="7.13.0.CON.1.ER1"
+LABEL amq.broker.version="7.13.0.CON.1.SR1"
 LABEL com.redhat.component="amq-broker-jolokia-api-server-rhel8-container"
-LABEL io.k8s.display-name="Red Hat AMQ Jolokia API Server"
+LABEL io.k8s.display-name="Red Hat AMQ CON.1 Jolokia Api Server"
 LABEL io.openshift.tags="messaging,amq,integration"
