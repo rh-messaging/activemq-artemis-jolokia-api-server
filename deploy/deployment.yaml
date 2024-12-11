@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: activemq-artemis-jolokia-api-server
-          image: quay.io/artemiscloud/activemq-artemis-jolokia-api-server:latest
+          image: quay.io/arkmq-org/activemq-artemis-jolokia-api-server:latest
           ports:
             - containerPort: 9443
               protocol: TCP

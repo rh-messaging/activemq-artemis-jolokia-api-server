@@ -27,22 +27,22 @@ yarn run build-api-doc
 
 1. Build the image:
    ```sh
-   docker build -t quay.io/artemiscloud/activemq-artemis-jolokia-api-server:latest .
+   docker build -t quay.io/arkmq-org/activemq-artemis-jolokia-api-server:latest .
    ```
 2. Push the image to image registry:
    ```sh
-   docker push quay.io/artemiscloud/activemq-artemis-jolokia-api-server:latest
+   docker push quay.io/arkmq-org/activemq-artemis-jolokia-api-server:latest
    ```
 
 ### deploy the service
 
 ```sh
-./deploy.sh [-i <image> -n]
+./deploy.sh [-i <image>]
 ```
 
 The optional `-i <image>` (or `--image <image>`) argument allows you to pass in
 the plugin image. If not specified the default
-`quay.io/artemiscloud/activemq-artemis-jolokia-api-server:latest` is
+`quay.io/arkmq-org/activemq-artemis-jolokia-api-server:latest` is
 deployed. for example:
 
 ```sh

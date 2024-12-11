@@ -2,13 +2,13 @@
   "name": "activemq-artemis-jolokia-api-server",
   "version": "0.1.2",
   "private": true,
-  "homepage": "https://github.com/artemiscloud/activemq-artemis-jolokia-api-server#readme",
+  "homepage": "https://github.com/arkmq-org/activemq-artemis-jolokia-api-server#readme",
   "bugs": {
-    "url": "https://github.com/artemiscloud/activemq-artemis-jolokia-api-server/issues"
+    "url": "https://github.com/arkmq-org/activemq-artemis-jolokia-api-server/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:artemiscloud/activemq-activemq-artemis-jolokia-api-server.git"
+    "url": "git+ssh://git@github.com:arkmq-org/activemq-activemq-artemis-jolokia-api-server.git"
   },
   "scripts": {
     "build": "yarn clean && tsc -p tsconfig.json && yarn copy-config",
