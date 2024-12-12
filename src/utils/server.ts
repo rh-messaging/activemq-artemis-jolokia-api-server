@@ -3,12 +3,11 @@ import * as OpenApiValidator from 'express-openapi-validator';
 import { Express } from 'express-serve-static-core';
 import { Summary, connector, summarise } from 'swagger-routes-express';
 import { rateLimit } from 'express-rate-limit';
-//import YAML from 'yamljs';
+import bearerToken from 'express-bearer-token';
 import * as YAML from 'js-yaml';
 import * as fs from 'fs';
 import path from 'path';
 import cors from 'cors';
-
 import * as api from '../api/controllers';
 import { logger, logRequest } from './logger';
 
@@ -42,11 +41,13 @@ const createServer = async (enableLogRequest: boolean): Promise<Express> => {
     apiSpec: yamlSpecFile,
     validateRequests: true,
     validateResponses: true,
-    ignorePaths: /jolokia\/login/,
+    validateSecurity: true,
+    ignorePaths: /jolokia|server\/login/,
   };
 
   server.use(express.json());
   server.use(express.text());
+  server.use(bearerToken());
   server.use(express.urlencoded({ extended: false }));
   server.use(cors());
   server.use(OpenApiValidator.middleware(validatorOptions));
@@ -72,7 +73,8 @@ const createServer = async (enableLogRequest: boolean): Promise<Express> => {
       next();
     }
   });
-  server.use(api.VerifyLogin);
+
+  server.use(api.PreOperation);
 
   const connect = connector(api, apiDefinition, {
     onCreateRoute: (method: string, descriptor: any[]) => {

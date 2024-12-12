@@ -83,7 +83,6 @@ If necessary update the code that is using the hooks to comply with your changes
 
 | Method | Path                                                                    | Description                            |
 | ------ | ----------------------------------------------------------------------- | -------------------------------------- |
-| POST   | [/jolokia/login](#postjolokialogin)                                     | The login api                          |
 | GET    | [/brokers](#getbrokers)                                                 | retrieve the broker mbean              |
 | GET    | [/brokerDetails](#getbrokerdetails)                                     | broker details                         |
 | GET    | [/readBrokerAttributes](#getreadbrokerattributes)                       | read broker attributes                 |
@@ -92,7 +91,6 @@ If necessary update the code that is using the hooks to comply with your changes
 | GET    | [/readAcceptorAttributes](#getreadacceptorattributes)                   | read acceptor attributes               |
 | GET    | [/readClusterConnectionAttributes](#getreadclusterconnectionattributes) | read cluster connection attributes     |
 | POST   | [/execClusterConnectionOperation](#postexecclusterconnectionoperation)  | execute a cluster connection operation |
-| GET    | [/checkCredentials](#getcheckcredentials)                               | Check the validity of the credentials  |
 | POST   | [/execBrokerOperation](#postexecbrokeroperation)                        | execute a broker operation             |
 | GET    | [/brokerComponents](#getbrokercomponents)                               | list all mbeans                        |
 | GET    | [/addresses](#getaddresses)                                             | retrieve all addresses on broker       |
@@ -114,12 +112,12 @@ If necessary update the code that is using the hooks to comply with your changes
 | OperationResult    | [#/components/schemas/OperationResult](#componentsschemasoperationresult)       |             |
 | DummyResponse      | [#/components/schemas/DummyResponse](#componentsschemasdummyresponse)           |             |
 | ApiResponse        | [#/components/schemas/ApiResponse](#componentsschemasapiresponse)               |             |
-| LoginResponse      | [#/components/schemas/LoginResponse](#componentsschemasloginresponse)           |             |
 | Address            | [#/components/schemas/Address](#componentsschemasaddress)                       |             |
 | Acceptor           | [#/components/schemas/Acceptor](#componentsschemasacceptor)                     |             |
 | ClusterConnection  | [#/components/schemas/ClusterConnection](#componentsschemasclusterconnection)   |             |
 | Queue              | [#/components/schemas/Queue](#componentsschemasqueue)                           |             |
 | Broker             | [#/components/schemas/Broker](#componentsschemasbroker)                         |             |
+| Endpoint           | [#/components/schemas/Endpoint](#componentsschemasendpoint)                     |             |
 | FailureResponse    | [#/components/schemas/FailureResponse](#componentsschemasfailureresponse)       |             |
 | JavaTypes          | [#/components/schemas/JavaTypes](#componentsschemasjavatypes)                   |             |
 | ComponentDetails   | [#/components/schemas/ComponentDetails](#componentsschemascomponentdetails)     |             |
@@ -129,80 +127,9 @@ If necessary update the code that is using the hooks to comply with your changes
 | Argument           | [#/components/schemas/Argument](#componentsschemasargument)                     |             |
 | ComponentAttribute | [#/components/schemas/ComponentAttribute](#componentsschemascomponentattribute) |             |
 | ExecResult         | [#/components/schemas/ExecResult](#componentsschemasexecresult)                 |             |
+| bearerAuth         | [#/components/securitySchemes/bearerAuth](#componentssecurityschemesbearerauth) |             |
 
 ## Path Details
-
----
-
-### [POST]/jolokia/login
-
-- Summary  
-  The login api
-
-- Description  
-  This api is used to login to a jolokia endpoint. It tries to get the broker mbean via the joloia url using the parameters passed in.
-  If it succeeds, it generates a [jwt token](https://jwt.io/introduction) and returns  
-  it back to the client. If it fails it returns a error.
-  Once authenticated, the client can access the  
-  apis defined in this file. With each request the client must include a valid jwt token in a http header named `jolokia-session-id`. The src will validate the token before processing a request is and rejects the request if the token is not valid.
-
-#### RequestBody
-
-- application/json
-
-```ts
-{
-  // identity of the broker instance, must in form of {cr-name}-{pod-ordinal}:{namespace}. For example ex-aao-0:test1
-  brokerName: string;
-  // The user name
-  userName: string;
-  // The password
-  password: string;
-  // The host name of the broker
-  jolokiaHost: string;
-  // either *http* or *https*
-  scheme: string;
-  // port number of jolokia endpoint
-  port: string;
-}
-```
-
-#### Responses
-
-- 200 Success
-
-`application/json`
-
-```ts
-{
-  message: string
-  status: string
-  // The jwt token
-  jolokia-session-id: string
-}
-```
-
-- 401 Invalid credentials
-
-`application/json`
-
-```ts
-{
-  status: enum[failed, error]
-  message: string
-}
-```
-
-- 500 Internal server error
-
-`application/json`
-
-```ts
-{
-  status: enum[failed, error]
-  message: string
-}
-```
 
 ---
 
@@ -216,10 +143,16 @@ If necessary update the code that is using the hooks to comply with your changes
    The return value is a one-element array that contains  
    the broker's mbean object name.
 
+#### Parameters(Query)
+
+```ts
+targetEndpoint: string;
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+endpoint-name?: string
 ```
 
 #### Responses
@@ -270,10 +203,10 @@ jolokia-session-id: string
    description of all the operations and attributes of the broker's mbean.  
    It is defined in [ActiveMQServerControl.java](https://github.com/apache/activemq-artemis/blob/2.33.0/artemis-core-client/src/main/java/org/apache/activemq/artemis/api/core/management/ActiveMQServerControl.java)
 
-#### Headers
+#### Parameters(Query)
 
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -335,10 +268,8 @@ jolokia-session-id: string
 names?: string[]
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -407,10 +338,8 @@ name: string;
 attrs?: string[]
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -487,10 +416,8 @@ routing-type: string
 attrs?: string[]
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -559,10 +486,8 @@ name: string;
 attrs?: string[]
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -631,10 +556,8 @@ name: string;
 attrs?: string[]
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -699,10 +622,8 @@ jolokia-session-id: string
 name: string;
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### RequestBody
@@ -767,54 +688,6 @@ jolokia-session-id: string
 
 ---
 
-### [GET]/checkCredentials
-
-- Summary  
-  Check the validity of the credentials
-
-#### Headers
-
-```ts
-jolokia-session-id: string
-```
-
-#### Responses
-
-- 200 Success
-
-`application/json`
-
-```ts
-{
-  message: enum[ok]
-  status: enum[successful]
-}
-```
-
-- 401 Invalid credentials
-
-`application/json`
-
-```ts
-{
-  status: enum[failed, error]
-  message: string
-}
-```
-
-- 500 Internal server error
-
-`application/json`
-
-```ts
-{
-  status: enum[failed, error]
-  message: string
-}
-```
-
----
-
 ### [POST]/execBrokerOperation
 
 - Summary  
@@ -827,10 +700,10 @@ jolokia-session-id: string
    The return value is a one element json array that contains  
    return values of invoked operation along with the request info.
 
-#### Headers
+#### Parameters(Query)
 
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### RequestBody
@@ -905,10 +778,10 @@ jolokia-session-id: string
   It retrieves and returns a list of all mbeans  
    registered directly under the broker managment domain.
 
-#### Headers
+#### Parameters(Query)
 
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -954,10 +827,10 @@ string[]
   **Get all addresses in a broker**
   It retrieves and returns a list of all address mbeans
 
-#### Headers
+#### Parameters(Query)
 
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -1016,10 +889,8 @@ jolokia-session-id: string
 address?: string
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -1094,10 +965,8 @@ name: string;
 routingType: string;
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -1159,10 +1028,8 @@ jolokia-session-id: string
 name: string;
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -1215,10 +1082,10 @@ jolokia-session-id: string
   **Get all acceptors in a broker**
   It retrieves and returns a list of all acceptor mbeans
 
-#### Headers
+#### Parameters(Query)
 
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -1279,10 +1146,8 @@ jolokia-session-id: string
 name: string;
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -1335,10 +1200,10 @@ jolokia-session-id: string
   **Get all cluster connections in a broker**
   It retrieves and returns a list of all cluster connection mbeans
 
-#### Headers
+#### Parameters(Query)
 
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -1399,10 +1264,8 @@ jolokia-session-id: string
 name: string;
 ```
 
-#### Headers
-
 ```ts
-jolokia-session-id: string
+targetEndpoint: string;
 ```
 
 #### Responses
@@ -1453,8 +1316,11 @@ jolokia-session-id: string
 
 - Description  
   **Show all exposed paths on the api server**
+
   The return value is a json object that contains  
    description of all api paths defined in the api server.
+
+- Security
 
 #### Responses
 
@@ -1465,6 +1331,9 @@ jolokia-session-id: string
 ```ts
 {
   message: {
+    security: {
+      enabled?: boolean
+    }
     info: {
       name?: string
       description?: string
@@ -1476,8 +1345,6 @@ jolokia-session-id: string
     }
   }
   status?: enum[successful]
-  // The jwt token
-  jolokia-session-id?: string
 }
 ```
 
@@ -1537,6 +1404,9 @@ jolokia-session-id: string
 ```ts
 {
   message: {
+    security: {
+      enabled?: boolean
+    }
     info: {
       name?: string
       description?: string
@@ -1548,19 +1418,6 @@ jolokia-session-id: string
     }
   }
   status?: enum[successful]
-  // The jwt token
-  jolokia-session-id?: string
-}
-```
-
-### #/components/schemas/LoginResponse
-
-```ts
-{
-  message: string
-  status: string
-  // The jwt token
-  jolokia-session-id: string
 }
 ```
 
@@ -1618,6 +1475,15 @@ jolokia-session-id: string
 ```ts
 {
   name: string;
+}
+```
+
+### #/components/schemas/Endpoint
+
+```ts
+{
+  name: string
+  url?: string
 }
 ```
 
@@ -1747,5 +1613,14 @@ jolokia-session-id: string
   error?: string
   timestamp?: number
   status: number
+}
+```
+
+### #/components/securitySchemes/bearerAuth
+
+```ts
+{
+  "type": "http",
+  "scheme": "bearer"
 }
 ```

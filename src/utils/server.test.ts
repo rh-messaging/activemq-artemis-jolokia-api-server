@@ -5,22 +5,21 @@ import createServer from './server';
 import nock from 'nock';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
+import { logger } from './logger';
 
-dotenv.config();
+dotenv.config({ path: '.test.env' });
 
 let testServer: https.Server;
 let mockJolokia: nock.Scope;
 
 const apiUrlBase = 'https://localhost:9443/api/v1';
 const apiUrlPrefix = '/console/jolokia';
-const loginUrl = apiUrlBase + '/jolokia/login';
 const jolokiaProtocol = 'https';
 const jolokiaHost = 'broker-0.test.com';
 const jolokiaPort = '8161';
-
+const targetEndpoint =
+  jolokiaProtocol + '://' + jolokiaHost + ':' + jolokiaPort;
 const startApiServer = async (): Promise<boolean> => {
-  process.env.API_SERVER_SECURITY_ENABLED = 'false';
-
   const result = await createServer(false)
     .then((server) => {
       const options = {
@@ -29,12 +28,13 @@ const startApiServer = async (): Promise<boolean> => {
       };
       testServer = https.createServer(options, server);
       testServer.listen(9443, () => {
-        console.info('Listening on https://0.0.0.0:9443');
+        logger.info('Listening on https://0.0.0.0:9443');
+        logger.info('Security is enabled');
       });
       return true;
     })
     .catch((err) => {
-      console.log('error starting server', err);
+      logger.info('error starting server', err);
       return false;
     });
   return result;
@@ -45,7 +45,7 @@ const stopApiServer = () => {
 };
 
 const startMockJolokia = () => {
-  mockJolokia = nock(jolokiaProtocol + '://' + jolokiaHost + ':' + jolokiaPort);
+  mockJolokia = nock(targetEndpoint);
 };
 
 const stopMockJolokia = () => {
@@ -65,13 +65,25 @@ afterAll(() => {
 });
 
 const doGet = async (url: string, token: string): Promise<fetch.Response> => {
-  const fullUrl = apiUrlBase + url;
+  if (!token) {
+    throw Error('token undefined ' + token);
+  }
+  const sep = url.indexOf('?') > -1 ? '&' : '?';
+  const fullUrl =
+    apiUrlBase +
+    url +
+    sep +
+    'targetEndpoint=' +
+    encodeURIComponent(targetEndpoint);
   const encodedUrl = fullUrl.replace(/,/g, '%2C');
   const response = await fetch(encodedUrl, {
     method: 'GET',
     headers: {
-      'jolokia-session-id': token,
+      Authorization: 'Bearer ' + token,
     },
+    agent: new https.Agent({
+      rejectUnauthorized: false,
+    }),
   });
   return response;
 };
@@ -81,100 +93,32 @@ const doPost = async (
   postBody: fetch.BodyInit,
   token: string,
 ): Promise<fetch.Response> => {
-  const fullUrl = apiUrlBase + url;
+  const sep = url.indexOf('?') > -1 ? '&' : '?';
+  const fullUrl =
+    apiUrlBase +
+    url +
+    sep +
+    'targetEndpoint=' +
+    encodeURIComponent(targetEndpoint);
   const encodedUrl = fullUrl.replace(/,/g, '%2C');
 
   const reply = await fetch(encodedUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'jolokia-session-id': token,
+      Authorization: 'Bearer ' + token,
     },
     body: postBody,
+    agent: new https.Agent({
+      rejectUnauthorized: false,
+    }),
   });
 
   return reply;
 };
 
-const doLogin = async (): Promise<fetch.Response> => {
-  const jolokiaResp = {
-    request: {},
-    value: ['org.apache.activemq.artemis:broker="amq-broker"'],
-    timestamp: 1714703745,
-    status: 200,
-  };
-  mockJolokia
-    .get(apiUrlPrefix + '/search/org.apache.activemq.artemis:broker=*')
-    .reply(200, JSON.stringify(jolokiaResp));
-
-  type LoginOptions = {
-    [key: string]: string;
-  };
-
-  const details: LoginOptions = {
-    brokerName: 'ex-aao-0',
-    userName: 'admin',
-    password: 'admin',
-    jolokiaHost: jolokiaHost,
-    port: jolokiaPort,
-    scheme: jolokiaProtocol,
-  };
-
-  const formBody: string[] = [];
-  for (const property in details) {
-    const encodedKey = encodeURIComponent(property);
-    const encodedValue = encodeURIComponent(details[property]);
-    formBody.push(encodedKey + '=' + encodedValue);
-  }
-  const formData = formBody.join('&');
-
-  const response = await fetch(loginUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData,
-  });
-
-  return response;
-};
-
-describe('test api server login', () => {
-  it('test login functionality', async () => {
-    const response = await doLogin();
-
-    expect(response.ok).toBeTruthy();
-    const data = await response.json();
-
-    expect(data['jolokia-session-id']).toBeDefined();
-  });
-
-  it('test login failure', async () => {
-    const jolokiaResp = {
-      request: {},
-      value: [''],
-      error: 'forbidden access',
-      timestamp: 1714703745,
-      status: 403,
-    };
-    mockJolokia
-      .get(apiUrlPrefix + '/search/org.apache.activemq.artemis:broker=*')
-      .reply(403, JSON.stringify(jolokiaResp));
-
-    const response = await doLogin();
-
-    expect(response.ok).toBeFalsy();
-  });
-});
-
 describe('test api server apis', () => {
-  let authToken: string;
-
-  beforeAll(async () => {
-    const response = await doLogin();
-    const data = await response.json();
-    authToken = data['jolokia-session-id'];
-  });
+  const authToken = 'SHA256~ABCDEF';
 
   it('test get brokers', async () => {
     const result = [
@@ -188,7 +132,10 @@ describe('test api server apis', () => {
       timestamp: 1714703745,
       status: 200,
     };
+
     mockJolokia
+      .get(apiUrlPrefix + '/search/org.apache.activemq.artemis:broker=*')
+      .reply(200, JSON.stringify(jolokiaResp))
       .get(apiUrlPrefix + '/search/org.apache.activemq.artemis:broker=*')
       .reply(200, JSON.stringify(jolokiaResp));
 
