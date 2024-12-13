@@ -48,4 +48,4 @@ CMD ["node", "dist/app.js"]
 LABEL name="arkmq-org/activemq-artemis-jolokia-api-server"
 LABEL description="ActiveMQ Artemis Jolokia Api Server"
 LABEL maintainer="Howard Gao <hgao@redhat.com>"
-LABEL version="0.1.2"
+LABEL version="0.1.3"
