@@ -1,7 +1,6 @@
 import { logger } from '../../utils/logger';
 import { AuthOptions } from '../../utils/security_util';
 import fetch from 'node-fetch';
-import https from 'https';
 
 // search the broker
 const brokerSearchPattern = 'org.apache.activemq.artemis:broker=*';
@@ -122,12 +121,6 @@ export class ArtemisJolokia {
       headers: headers,
     };
 
-    if (reqUrl.startsWith('https')) {
-      authOpts['agent'] = new https.Agent({
-        rejectUnauthorized: false,
-      });
-    }
-
     authOpts.headers.set('Authorization', 'Bearer ' + token);
     return authOpts;
   }
@@ -169,6 +162,10 @@ export class ArtemisJolokia {
       .then((message) => {
         const resp: JolokiaResponseType = JSON.parse(message);
         return resp.value;
+      })
+      .catch((err) => {
+        logger.error(err);
+        throw err;
       });
 
     return reply;
@@ -211,6 +208,7 @@ export class ArtemisJolokia {
         return resp.value;
       })
       .catch((err) => {
+        logger.error(err);
         throw err;
       });
 
@@ -251,6 +249,7 @@ export class ArtemisJolokia {
         return jsonObj as JolokiaExecResponse;
       })
       .catch((err) => {
+        logger.error(err);
         throw err;
       });
 
@@ -287,6 +286,7 @@ export class ArtemisJolokia {
         return resp;
       })
       .catch((err) => {
+        logger.error(err);
         throw err;
       });
     return reply;

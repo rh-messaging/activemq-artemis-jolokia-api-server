@@ -18,6 +18,9 @@ spec:
       containers:
         - name: activemq-artemis-jolokia-api-server
           image: quay.io/arkmq-org/activemq-artemis-jolokia-api-server:latest
+          env:
+            - name: NODE_EXTRA_CA_CERTS
+              value: '/var/jolokia-api-server-selfsigned-ca-cert-secret/ca.crt'
           ports:
             - containerPort: 9443
               protocol: TCP
@@ -38,10 +41,17 @@ spec:
             - name: plugin-serving-cert
               readOnly: true
               mountPath: /var/serving-cert
+            - name: jolokia-api-server-selfsigned-ca-cert-secret
+              readOnly: true
+              mountPath: /var/jolokia-api-server-selfsigned-ca-cert-secret
       volumes:
         - name: plugin-serving-cert
           secret:
             secretName: plugin-serving-cert
+            defaultMode: 420
+        - name: jolokia-api-server-selfsigned-ca-cert-secret
+          secret:
+            secretName: jolokia-api-server-selfsigned-ca-cert-secret
             defaultMode: 420
       restartPolicy: Always
       dnsPolicy: ClusterFirst

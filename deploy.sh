@@ -35,5 +35,37 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# find the cert-manager operator namespace, if this can't be retrived there's no
+# possibility to proceed
+certManagerNamespace=$(oc get Subscriptions --all-namespaces -ojson | jq -r '.items[] | select(.spec.name == "cert-manager") | .metadata.namespace')
+if test -z "$certManagerNamespace"
+then
+      echo "cert-manager's namespace can't be determined, check that it is installed"
+      oc get Subscriptions --all-namespaces
+      exit 1
+fi
+echo "cert-manager's namespace: $certManagerNamespace"
+
+# retrieve the cluster domain to produce a valid cluster issuer
+clusterDomain=$(oc get -n openshift-ingress-operator ingresscontroller/default -o json | jq -r '.status.domain')
+if test -z "$certManagerNamespace"
+then
+      echo "The cluster domain can't be retrived"
+      exit 1
+fi
+echo "cluster domain: $clusterDomain"
+
 echo "deploying using image: ${API_SERVER_IMAGE}"
-oc kustomize deploy | sed "s|image: .*|image: ${API_SERVER_IMAGE}|" | oc apply -f -
+oc kustomize deploy \
+    | sed "s|image: .*|image: ${API_SERVER_IMAGE}|" \
+    | sed "s|- issuer.mydomain.tld|- issuer.${clusterDomain}|" \
+    | oc apply -f -
+
+
+while ! kubectl get secret jolokia-api-server-selfsigned-ca-cert-secret   --namespace openshift-operators; do echo "Waiting for the CA"; sleep 1; done
+# copy the secret from the cert-manager namespace to the jolokia api server
+# namespace
+oc get secret jolokia-api-server-selfsigned-ca-cert-secret \
+    --namespace=openshift-operators -oyaml \
+    | sed s/"namespace: ${certManagerNamespace}"/"namespace: activemq-artemis-jolokia-api-server"/\ \
+    | kubectl apply -n activemq-artemis-jolokia-api-server -f -

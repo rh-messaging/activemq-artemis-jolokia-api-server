@@ -9,7 +9,67 @@ supported.
 
 ## Dev setup
 
+### Create the cluster issuer
+
+To allow the jolokia api server to trust the broker in case the broker is using
+a TLS secured connection, you'll need to have a trust bundle to load. The trust
+bundle will come from a cluster issuer that is also used to issue certs for the
+broker.
+
+One way to obtain this cluster issuer correctly configured is to deploy the
+upstream's jolokia api server to your cluster regardless to the fact that you
+may also run it locally alongside the bridge when developing locally.
+
+To do that follow the section about deploying.
+
+#### using the cluster issuer to secure the connection
+
+The cluster issuer needs to be used to generate the cert the broker would use
+for its console.
+
+An example for a broker called ex-aao within the myproject namespace would
+be:
+
+> [!NOTE]
+> you need to adapt the domain name in the CR with the one of your cluster. One
+> way to obtain it is to this one liner:
+> `oc get -n openshift-ingress-operator ingresscontroller/default -o json | jq '.status.domain'`
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ex-aao-console-certificate-cert
+  namespace: myproject
+spec:
+  secretName: ex-aao-console-certificate-cert-secret
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+
+  isCA: false
+
+  commonName: ex-aao-console-cert
+
+  dnsNames:
+    - ex-aao-wconsj-0-svc-rte-default.mydomain.tld
+    - ex-aao-wconsj-0-svc.default
+  issuerRef:
+    name: jolokia-api-server-selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
 ```
+
+### Build and start
+
+If you have followed the previous step, you need to download the trust bundle so
+that your dev env has access to it and can connect to a TLS broker.
+
+```sh
+cd trust
+./download-ca.sh -c jolokia-api-server-selfsigned-issuer
+cd ..
 yarn build
 yarn start
 ```
@@ -19,7 +79,7 @@ yarn start
 After updating the `openapi.yml` file, please make sure to generate the
 documentation:
 
-```
+```sh
 yarn run build-api-doc
 ```
 
@@ -51,15 +111,6 @@ deployed. for example:
 
 The optional -ns (or --nosec) argument can be used to disable security.
 
----
-
-**Note:**
-
-you should enable security in your application. Disable security can only
-be used for test purposes.
-
----
-
 The `deploy.sh` script uses `oc kustomize` (built-in
 [kustomize](https://github.com/kubernetes-sigs/kustomize)) command to configure
 and deploy the plugin using resources and patches defined under ./deploy
@@ -71,60 +122,21 @@ To undeploy, run
 ./undeploy.sh
 ```
 
-### Notes about the JWT secret
-
-The api server uses SECRET_ACCESS_TOKEN env var to get the secret for generating
-jwt tokens. It has a default value in .env for dev purposes.
-
-In production you should override it with your own secret.
-
-The jwt-key-gen.sh is a tool to generate a random key and used in Dockerfile.
-It makes sure when you build the api server image a new random key is used.
-
-## Security Model of the API Server
-
-The API Server provides a security model that provides authentication and authorization of incoming clients.
-The security can be enabled/disabled (i.e. via `API_SERVER_SECURITY_ENABLED` env var)
-
-### Authentication
-
-Currently the api server support `jwt` token authentication.
-
-#### The login api
-
-The login api is defined in openapi.yml
-
-```yaml
-/server/login
-```
-
-A client logs in to an api server by sending a POST request to the login path. The request body contains login information (i.e. username and password for jwt authentication type)
-
-Please refer to [api.md](api.md) for details of the log api.
-
-Currently the security manager uses local file to store user's info. The default users file name is `.users.json`
-The users file name can be configured using `USERS_FILE_URL` env var. See `.test.users.json` for sample values.
-
-### Authorization
-
-Currently the api server doesn't perform authorization on logged in users.
-
-### Endpoints Management
-
-The server keeps a list of jolokia endpoints for clients to access. The endpoints are loaded from a local file named
-`.endpoints.json`. Each top level entry represents a jolokia endpoint. An entry has a unique name and details to access the jolokia api. See `.test.endpoints.json` for sample values.
-
 ### Accessing a jolokia endpoint
 
-When an authenticated client sends a request to the api-server, it should present its token in the request header
+When an authenticated client sends a request to the api-server, it should
+present its token in the request header.
 
-    'Authorization: Bearer `token`'
+'Authorization: Bearer `token`'
 
-It also need to give the `targetEndpoint` in the query part of the request if the request is to access an jolokia endpoint.
+It also need to give the `targetEndpoint` in the query part of the request if
+the request is to access an jolokia endpoint.
 
 For example `/execBrokerOperation?targetEndpoint=broker1`.
 
 ### Direct Proxy
 
-Direct Proxy means a client can pass a broker's endpoint info to the api-server in order to access it via the api-server.
-For example the [self-provisioning plugin](https://github.com/artemiscloud/activemq-artemis-self-provisioning-plugin) uses this api to access the jolokia of a broker's jolokia endpoint.
+Direct Proxy means a client can pass a broker's endpoint info to the api-server
+in order to access it via the api-server. For example the [self-provisioning
+plugin](https://github.com/arkmq-org/activemq-artemis-self-provisioning-plugin)
+uses this api to access the jolokia of a broker's jolokia endpoint.
