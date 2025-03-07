@@ -45,7 +45,12 @@ ENV NODE_ENV=production
 CMD ["node", "dist/app.js"]
 
 ## Labels
-LABEL name="arkmq-org/activemq-artemis-jolokia-api-server"
-LABEL description="ActiveMQ Artemis Jolokia Api Server"
+LABEL name="amq-broker-7/amq-broker-7x-jolokia-api-server-rhel9"
+LABEL description="Red Hat AMQ 7.x.x Jolokia Api Server"
 LABEL maintainer="Howard Gao <hgao@redhat.com>"
-LABEL version="0.2.2"
+LABEL version="7.x.x"
+LABEL summary="Red Hat AMQ 7.x.x Jolokia Api Server"
+LABEL amq.broker.version="7.x.x.CON.1.SR1"
+LABEL com.redhat.component="amq-broker-jolokia-api-server-rhel9-container"
+LABEL io.k8s.display-name="Red Hat AMQ 7.x.x Jolokia Api Server"
+LABEL io.openshift.tags="messaging,amq,integration"
