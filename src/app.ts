@@ -3,9 +3,11 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
-import { logger } from './utils/logger';
+import { InitLoggers, logger } from './utils/logger';
 
 dotenv.config();
+
+InitLoggers();
 
 logger.info(
   `Starting plugin ${process.env.PLUGIN_NAME} ${process.env.PLUGIN_VERSION}`,
@@ -49,4 +51,5 @@ createServer(isReqLogEnabled === 'true')
   })
   .catch((err) => {
     logger.error(`Error: ${err}`);
+    process.exit(1);
   });

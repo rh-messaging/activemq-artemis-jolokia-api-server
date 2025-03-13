@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/nodejs-20:latest AS build-image
+FROM registry.access.redhat.com/ubi9/nodejs-20:latest AS build-image
 
 ### BEGIN REMOTE SOURCE
 # Use the COPY instruction only inside the REMOTE SOURCE block
@@ -30,7 +30,7 @@ RUN NEWKEY=`/usr/src/app/jwt-key-gen.sh` && sed -i "s/^SECRET_ACCESS_TOKEN=.*/SE
 ## Gather productization dependencies
 RUN yarn install --network-timeout 1000000 --modules-folder node_modules_prod --production
 
-FROM registry.access.redhat.com/ubi8/nodejs-20-minimal:latest
+FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:latest
 
 COPY --from=build-image /usr/src/app/dist /usr/share/amq-spp/dist
 COPY --from=build-image /usr/src/app/.env /usr/share/amq-spp/.env
@@ -45,7 +45,7 @@ ENV NODE_ENV=production
 CMD ["node", "dist/app.js"]
 
 ## Labels
-LABEL name="artemiscloud/activemq-artemis-jolokia-api-server"
+LABEL name="arkmq-org/activemq-artemis-jolokia-api-server"
 LABEL description="ActiveMQ Artemis Jolokia Api Server"
 LABEL maintainer="Howard Gao <hgao@redhat.com>"
-LABEL version="0.1.2"
+LABEL version="0.2.2"
