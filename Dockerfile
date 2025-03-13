@@ -30,7 +30,7 @@ RUN NEWKEY=`/usr/src/app/jwt-key-gen.sh` && sed -i "s/^SECRET_ACCESS_TOKEN=.*/SE
 ## Gather productization dependencies
 RUN yarn install --network-timeout 1000000 --modules-folder node_modules_prod --production
 
-FROM registry-proxy.engineering.redhat.com/rh-osbs/ubi8-nodejs-20-minimal@sha256:8db813739bca22520fac586eb2bcedc53e5703d6181686cadd2b5225a9a533cb
+FROM registry.access.redhat.com/ubi8/nodejs-20-minimal:latest
 
 COPY --from=build-image /usr/src/app/dist /usr/share/amq-spp/dist
 COPY --from=build-image /usr/src/app/.env /usr/share/amq-spp/.env
@@ -45,7 +45,7 @@ ENV NODE_ENV=production
 CMD ["node", "dist/app.js"]
 
 ## Labels
-LABEL name="amq-broker-8/amq-broker-80-jolokia-api-server-rhel8"
-LABEL description="Red Hat AMQ 8.0 Jolokia Api Server"
+LABEL name="artemiscloud/activemq-artemis-jolokia-api-server"
+LABEL description="ActiveMQ Artemis Jolokia Api Server"
 LABEL maintainer="Howard Gao <hgao@redhat.com>"
-LABEL version="8.0.0"
+LABEL version="0.1.2"
