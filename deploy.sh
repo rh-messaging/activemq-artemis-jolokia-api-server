@@ -40,9 +40,13 @@ done
 certManagerNamespace=$(oc get Subscriptions --all-namespaces -ojson | jq -r '.items[] | select(.spec.name == "cert-manager") | .metadata.namespace')
 if test -z "$certManagerNamespace"
 then
-      echo "cert-manager's namespace can't be determined, check that it is installed"
-      oc get Subscriptions --all-namespaces
-      exit 1
+  certManagerNamespace=$(oc get Subscriptions --all-namespaces -ojson | jq -r '.items[] | select(.spec.name == "openshift-cert-manager-operator") | .metadata.namespace')
+  if test -z "$certManagerNamespace"
+  then
+    echo "cert-manager's namespace can't be determined, check that it is installed"
+    oc get Subscriptions --all-namespaces
+    exit 1
+  fi
 fi
 echo "cert-manager's namespace: $certManagerNamespace"
 
@@ -50,8 +54,8 @@ echo "cert-manager's namespace: $certManagerNamespace"
 clusterDomain=$(oc get -n openshift-ingress-operator ingresscontroller/default -o json | jq -r '.status.domain')
 if test -z "$certManagerNamespace"
 then
-      echo "The cluster domain can't be retrived"
-      exit 1
+  echo "The cluster domain can't be retrived"
+  exit 1
 fi
 echo "cluster domain: $clusterDomain"
 
@@ -59,13 +63,13 @@ echo "deploying using image: ${API_SERVER_IMAGE}"
 oc kustomize deploy \
     | sed "s|image: .*|image: ${API_SERVER_IMAGE}|" \
     | sed "s|- issuer.mydomain.tld|- issuer.${clusterDomain}|" \
+    | sed "s|namespace: openshift-operators|namespace: ${certManagerNamespace}|" \
     | oc apply -f -
 
-
-while ! kubectl get secret jolokia-api-server-selfsigned-ca-cert-secret   --namespace openshift-operators; do echo "Waiting for the CA"; sleep 1; done
+while ! oc get secret jolokia-api-server-selfsigned-ca-cert-secret   --namespace=${certManagerNamespace}; do echo "Waiting for the CA"; sleep 1; done
 # copy the secret from the cert-manager namespace to the jolokia api server
 # namespace
 oc get secret jolokia-api-server-selfsigned-ca-cert-secret \
-    --namespace=openshift-operators -oyaml \
+    --namespace=${certManagerNamespace} -oyaml \
     | sed s/"namespace: ${certManagerNamespace}"/"namespace: activemq-artemis-jolokia-api-server"/\ \
-    | kubectl apply -n activemq-artemis-jolokia-api-server -f -
+    | oc apply -n activemq-artemis-jolokia-api-server -f -
