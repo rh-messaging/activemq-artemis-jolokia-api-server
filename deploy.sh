@@ -11,6 +11,7 @@ function printUsage() {
   echo "  ./${SCRIPT_NAME} -i|--image <image url>"
   echo "Options: "
   echo "  -i|--image  Specify the plugin image to deploy. (default is ${DEFAULT_IMAGE})"
+  echo "  -c|--certManagerNamespace  give the namespace cert manager is installed in, will search for it in the Subscriptions otherwise"
   echo "  -h|--help   Print this message."
 }
 
@@ -25,6 +26,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    -c|--certManagerNamespace)
+      certManagerNamespace="$2"
+      shift
+      shift
+      ;;
     -*|--*)
       echo "Unknown option $1"
       printUsage
@@ -35,17 +41,21 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# find the cert-manager operator namespace, if this can't be retrived there's no
-# possibility to proceed
-certManagerNamespace=$(oc get Subscriptions --all-namespaces -ojson | jq -r '.items[] | select(.spec.name == "cert-manager") | .metadata.namespace')
+# if the user has overridden the certManagerNamespace don't try to search for it
 if test -z "$certManagerNamespace"
-then
-  certManagerNamespace=$(oc get Subscriptions --all-namespaces -ojson | jq -r '.items[] | select(.spec.name == "openshift-cert-manager-operator") | .metadata.namespace')
+  then
+  # find the cert-manager operator namespace, if this can't be retrived there's no
+  # possibility to proceed
+  certManagerNamespace=$(oc get Subscriptions --all-namespaces -ojson | jq -r '.items[] | select(.spec.name == "cert-manager") | .metadata.namespace')
   if test -z "$certManagerNamespace"
   then
-    echo "cert-manager's namespace can't be determined, check that it is installed"
-    oc get Subscriptions --all-namespaces
-    exit 1
+    certManagerNamespace=$(oc get Subscriptions --all-namespaces -ojson | jq -r '.items[] | select(.spec.name == "openshift-cert-manager-operator") | .metadata.namespace')
+    if test -z "$certManagerNamespace"
+    then
+      echo "Error: cert-manager's namespace can't be determined"
+      oc get Subscriptions --all-namespaces
+      exit 1
+    fi
   fi
 fi
 echo "cert-manager's namespace: $certManagerNamespace"
