@@ -30,7 +30,7 @@ RUN NEWKEY=`/usr/src/app/jwt-key-gen.sh` && sed -i "s/^SECRET_ACCESS_TOKEN=.*/SE
 ## Gather productization dependencies
 RUN yarn install --network-timeout 1000000 --modules-folder node_modules_prod --production
 
-FROM registry.redhat.io/ubi9/nodejs-20-minimal@sha256:8675d906efad6fd5d021bf081895d3b1f2b0546af5cd0f79a85cf807b9600dd6
+FROM registry.redhat.io/ubi9/nodejs-20-minimal@sha256:b4175b4ca6686266b54903a0d4bd84cf07fc98f9f9d511a30fe3c930350def68
 
 COPY --from=build-image /usr/src/app/dist /usr/share/amq-spp/dist
 COPY --from=build-image /usr/src/app/.env /usr/share/amq-spp/.env
