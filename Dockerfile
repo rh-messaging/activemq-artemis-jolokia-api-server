@@ -1,4 +1,4 @@
-FROM registry-proxy.engineering.redhat.com/rh-osbs/rhacm2-yarn-builder@sha256:950ef036f557f1a6ce47f7f1ce4dfc1ad4c0c471c5475b05a9c2ea8f5e1aae50 AS build-image
+FROM registry.access.redhat.com/ubi9/nodejs-20:latest AS build-image
 
 ### BEGIN REMOTE SOURCE
 # Use the COPY instruction only inside the REMOTE SOURCE block
@@ -30,7 +30,7 @@ RUN NEWKEY=`/usr/src/app/jwt-key-gen.sh` && sed -i "s/^SECRET_ACCESS_TOKEN=.*/SE
 ## Gather productization dependencies
 RUN yarn install --network-timeout 1000000 --modules-folder node_modules_prod --production
 
-FROM registry.redhat.io/ubi9/nodejs-20-minimal@sha256:8d786ab1cda0930d8a040b35a125a2e04fe6446b73af397b20291478141fe244
+FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:latest
 
 COPY --from=build-image /usr/src/app/dist /usr/share/amq-spp/dist
 COPY --from=build-image /usr/src/app/.env /usr/share/amq-spp/.env
@@ -45,12 +45,7 @@ ENV NODE_ENV=production
 CMD ["node", "dist/app.js"]
 
 ## Labels
-LABEL name="amq-broker-8/amq-broker-80-jolokia-api-server-rhel9"
-LABEL description="Red Hat AMQ 8.0.0 Jolokia Api Server"
+LABEL name="arkmq-org/activemq-artemis-jolokia-api-server"
+LABEL description="ActiveMQ Artemis Jolokia Api Server"
 LABEL maintainer="Howard Gao <hgao@redhat.com>"
-LABEL version="8.0.0"
-LABEL summary="Red Hat AMQ 8.0.0 Jolokia Api Server"
-LABEL amq.broker.version="8.0.0.CON.1.SR1"
-LABEL com.redhat.component="amq-broker-jolokia-api-server-rhel9-container"
-LABEL io.k8s.display-name="Red Hat AMQ 8.0.0 Jolokia Api Server"
-LABEL io.openshift.tags="messaging,amq,integration"
+LABEL version="0.2.5"
