@@ -38,6 +38,7 @@ COPY --from=build-image /usr/src/app/node_modules_prod /usr/share/amq-spp/node_m
 
 WORKDIR /usr/share/amq-spp
 
+USER root
 ## Upgrade packages
 RUN microdnf update -y --setopt=install_weak_deps=0 && rm -rf /var/cache/yum
 
