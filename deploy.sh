@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-DEFAULT_IMAGE="quay.io/arkmq-org/activemq-artemis-jolokia-api-server:latest"
+DEFAULT_IMAGE=registry.redhat.io/amq-broker-8/amq-broker-80-jolokia-api-server-rhel9@sha256:36425bf222bf53e68964edfd274b718fa83aaf522c7a9a8aeffbb0f57365a6ce
 API_SERVER_IMAGE=${DEFAULT_IMAGE}
 
 SCRIPT_NAME=$(basename "$0")
