@@ -1,4 +1,4 @@
-FROM registry-proxy.engineering.redhat.com/rh-osbs/rhacm2-yarn-builder@sha256:c27effd903bf64f5594657e8ea4e81cf42e6cea14103803c69b3c0f4497c1561 AS build-image
+FROM registry-proxy.engineering.redhat.com/rh-osbs/rhacm2-yarn-builder@sha256:c1c27b8140869e599e7b2321a1715cfc22d7dd711d2baa8f0dd6cc5598f00ec4 AS build-image
 
 ### BEGIN REMOTE SOURCE
 # Use the COPY instruction only inside the REMOTE SOURCE block
@@ -30,7 +30,7 @@ RUN NEWKEY=`/usr/src/app/jwt-key-gen.sh` && sed -i "s/^SECRET_ACCESS_TOKEN=.*/SE
 ## Gather productization dependencies
 RUN yarn install --network-timeout 1000000 --modules-folder node_modules_prod --production
 
-FROM registry.redhat.io/ubi9/nodejs-20-minimal@sha256:754490f85d24ed528afaf986fc2df2748fd75e6a2591885f1c84fe267559e6e4
+FROM registry.redhat.io/ubi9/nodejs-20-minimal@sha256:7eff4cf1dd4d4be85b90aecfa4b123c228d7c1a7f37c51068ced3c0ae26de7e8
 
 COPY --from=build-image /usr/src/app/dist /usr/share/amq-spp/dist
 COPY --from=build-image /usr/src/app/.env /usr/share/amq-spp/.env
