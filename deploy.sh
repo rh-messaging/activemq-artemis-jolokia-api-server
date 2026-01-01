@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-DEFAULT_IMAGE=registry.redhat.io/amq-broker-8/amq-broker-80-jolokia-api-server-rhel9@sha256:5f1cd2230445c0bd98e2ccbecf1c08e7abee217700536a7e2c4ace3ed4e24c88
+DEFAULT_IMAGE=registry.redhat.io/amq-broker-8/amq-broker-80-jolokia-api-server-rhel9@sha256:64f794fbabebc457b3459ea5b1061ba089e6622a5efea2092c4868de7dd6e5fc
 API_SERVER_IMAGE=${DEFAULT_IMAGE}
 
 SCRIPT_NAME=$(basename "$0")
