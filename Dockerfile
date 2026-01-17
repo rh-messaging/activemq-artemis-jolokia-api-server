@@ -51,5 +51,5 @@ CMD ["node", "dist/app.js"]
 ## Labels
 LABEL name="arkmq-org/activemq-artemis-jolokia-api-server"
 LABEL description="ActiveMQ Artemis Jolokia Api Server"
-LABEL maintainer="Howard Gao <hgao@redhat.com>"
+LABEL maintainer="ArkMQ <info@arkmq.org>"
 LABEL version="0.2.5"
