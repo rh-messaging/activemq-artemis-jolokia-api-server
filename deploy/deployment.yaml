@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: activemq-artemis-jolokia-api-server
-          image: registry.redhat.io/amq-broker-8/amq-broker-80-jolokia-api-server-rhel9@sha256:6a17c650b02f160af7a402f1101e197cb23e4d1edf5a336774dabba6c1d172f4
+          image: registry.redhat.io/amq-broker-8/amq-broker-80-jolokia-api-server-rhel9@sha256:3f2953ed79e4f88f83feeacede9f69591b388c6c5ed2f84661ad52d9bd511990
           env:
             - name: NODE_EXTRA_CA_CERTS
               value: '/var/jolokia-api-server-selfsigned-ca-cert-secret/ca.crt'
